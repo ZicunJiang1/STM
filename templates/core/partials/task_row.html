@@ -1,0 +1,39 @@
+<article class="task-row-card {% if task.is_overdue %}task-row-card-overdue{% elif task.is_due_soon %}task-row-card-due{% endif %}" data-task-id="{{ task.id }}">
+    <div class="task-select-cell">
+        <input type="checkbox" class="task-select-checkbox" value="{{ task.id }}" aria-label="Select {{ task.title }}">
+    </div>
+    <div class="task-row-main">
+        <div class="task-row-heading">
+            <div>
+                <a class="task-title-link" href="{% url 'task_detail' task.pk %}{% if current_list_url %}?next={{ current_list_url|urlencode }}{% endif %}"><h3>{{ task.title }}</h3></a>
+                <p class="task-row-copy clamp-2">{{ task.description|default:'No description provided.' }}</p>
+            </div>
+            <div class="task-row-badges">
+                <span class="badge">{{ task.course.code }}</span>
+                <span class="badge {{ task.priority_badge_class }}">{{ task.get_priority_display }}</span>
+                <span class="badge status-badge {{ task.status_badge_class }}" data-status-text>{{ task.get_status_display }}</span>
+                {% if task.is_overdue %}<span class="badge badge-danger" data-due-flag>Overdue</span>{% elif task.is_due_soon %}<span class="badge due-badge" data-due-flag>Due soon</span>{% endif %}
+            </div>
+        </div>
+        <div class="task-row-meta">
+            <div>
+                <span class="mini-label">Due date</span>
+                <strong>{{ task.due_date|date:'d M Y' }}</strong>
+            </div>
+            <div>
+                <span class="mini-label">Course</span>
+                <strong>{{ task.course.title }}</strong>
+            </div>
+            <div>
+                <span class="mini-label">Last updated</span>
+                <strong>{{ task.updated_at|date:'d M Y' }}</strong>
+            </div>
+        </div>
+    </div>
+    <div class="task-row-actions">
+        <button type="button" class="btn btn-ghost quick-status-btn" data-quick-status-url="{% url 'quick_status_update' task.pk %}">Cycle status</button>
+        <a class="btn btn-ghost" href="{% url 'task_detail' task.pk %}{% if current_list_url %}?next={{ current_list_url|urlencode }}{% endif %}">Details</a>
+        <a class="btn btn-ghost" href="{% url 'task_update' task.pk %}{% if current_list_url %}?next={{ current_list_url|urlencode }}{% endif %}">Edit</a>
+        <a class="btn btn-danger" href="{% url 'task_delete' task.pk %}{% if current_list_url %}?next={{ current_list_url|urlencode }}{% endif %}">Delete</a>
+    </div>
+</article>

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Edit profile | Student Task Manager{% endblock %}
+{% block content %}
+<section class="hero-panel hero-panel-slim">
+    <div class="hero-copy">
+        <h1>Edit profile</h1>
+        <p class="hero-text">Adjust the details shown across your workspace.</p>
+    </div>
+</section>
+
+<section class="content-grid two-column-layout">
+    <article class="card form-card narrow-card">
+        <form method="post" novalidate data-page-transition-form>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+            <div class="form-grid one-column">
+                {% for field in form %}
+                    <div>
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<small class="help-text">{{ field.help_text }}</small>{% endif %}
+                        {% if field.errors %}<div class="field-error">{{ field.errors|striptags }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="button-row top-gap">
+                <button type="submit" class="btn btn-primary">Save profile</button>
+                <a class="btn btn-ghost" href="{{ next_url }}">Cancel</a>
+            </div>
+        </form>
+    </article>
+    <aside class="card side-panel profile-preview-panel">
+        <p class="mini-label">Preview</p>
+        <h2>How this appears in the app</h2>
+        <div class="profile-preview">
+            {% if form.instance.avatar %}
+                <img id="avatar-preview" class="avatar avatar-large" src="{{ form.instance.avatar }}" alt="Avatar preview" data-empty-avatar="{{ request.user.username|first|upper }}">
+            {% else %}
+                <div id="avatar-preview-fallback" class="avatar avatar-large avatar-placeholder">{{ request.user.username|first|upper }}</div>
+                <img id="avatar-preview" class="avatar avatar-large hidden" src="" alt="Avatar preview" data-empty-avatar="{{ request.user.username|first|upper }}">
+            {% endif %}
+            <h2>{{ form.instance.display_name|default:request.user.username }}</h2>
+            <p class="muted">The preview updates as you change the avatar URL.</p>
+        </div>
+    </aside>
+</section>
+{% endblock %}

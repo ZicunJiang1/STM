@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Edit course{% else %}Create course{% endif %} | Student Task Manager{% endblock %}
+{% block content %}
+<section class="form-page-shell">
+    <div class="hero-copy form-page-header">
+        <h1>{% if object %}Edit course{% else %}Create course{% endif %}</h1>
+        <p class="hero-text">Keep the code and title consistent with the module name students already recognise.</p>
+    </div>
+
+    <article class="card form-card form-page-card">
+        <form method="post" novalidate data-page-transition-form>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+            <div class="form-grid one-column">
+                {% for field in form %}
+                    <div>
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<div class="field-error">{{ field.errors|striptags }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="button-row top-gap">
+                <button type="submit" class="btn btn-primary">Save course</button>
+                <a class="btn btn-ghost" href="{{ next_url }}">Cancel</a>
+            </div>
+        </form>
+    </article>
+</section>
+{% endblock %}

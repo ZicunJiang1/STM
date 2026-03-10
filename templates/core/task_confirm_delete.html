@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Delete task | Student Task Manager{% endblock %}
+{% block content %}
+<section class="hero-panel hero-panel-slim">
+    <div class="hero-copy">
+        <h1>Delete task</h1>
+        <p class="hero-text">Remove <strong>{{ object.title }}</strong> permanently.</p>
+    </div>
+</section>
+<section class="card narrow-card">
+    <p>This action cannot be undone. The task record and any linked notes will be removed.</p>
+    <form method="post" data-confirm="This task will be permanently deleted." data-page-transition-form>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next_url }}">
+        <div class="button-row top-gap">
+            <button type="submit" class="btn btn-danger">Delete task</button>
+            <a class="btn btn-ghost" href="{{ next_url }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

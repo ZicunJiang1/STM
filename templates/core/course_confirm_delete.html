@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Delete course | Student Task Manager{% endblock %}
+{% block content %}
+<section class="hero-panel hero-panel-slim">
+    <div class="hero-copy">
+        <h1>Delete course</h1>
+        <p class="hero-text">Remove <strong>{{ object }}</strong> and all linked tasks.</p>
+    </div>
+</section>
+<section class="card narrow-card">
+    <p class="muted">This will also delete every task associated with the course.</p>
+    <form method="post" data-confirm="Deleting this course will also delete all linked tasks." data-page-transition-form>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next_url }}">
+        <div class="button-row top-gap">
+            <button type="submit" class="btn btn-danger">Delete course</button>
+            <a class="btn btn-ghost" href="{{ next_url }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Overview | Student Task Manager{% endblock %}
+{% block content %}
+<section class="dashboard-header-strip">
+    <div>
+        <h1>Overview</h1>
+        <p class="hero-text dashboard-intro">Track progress, urgent deadlines, and course load without crowding the main board.</p>
+    </div>
+</section>
+
+<section class="overview-grid">
+    <article class="card overview-hero">
+        <p class="mini-label">Completion rate</p>
+        <div class="hero-metric">{{ completion_rate }}%</div>
+        <p class="muted-light">{{ done_count }} completed out of {{ total_tasks }} task{{ total_tasks|pluralize }}.</p>
+    </article>
+
+    <div class="metric-grid overview-metrics">
+        <article class="metric-card"><span class="metric-kicker">Total tasks</span><strong>{{ total_tasks }}</strong><p>All tasks currently saved.</p></article>
+        <article class="metric-card"><span class="metric-kicker">Active</span><strong>{{ active_count }}</strong><p>Tasks still in progress.</p></article>
+        <article class="metric-card"><span class="metric-kicker">Due soon</span><strong>{{ due_soon_count }}</strong><p>Deadlines within the next 3 days.</p></article>
+        <article class="metric-card"><span class="metric-kicker">Overdue</span><strong>{{ overdue_count }}</strong><p>Tasks that need immediate attention.</p></article>
+        <article class="metric-card"><span class="metric-kicker">Courses</span><strong>{{ course_count }}</strong><p>Modules currently being tracked.</p></article>
+        <article class="metric-card"><span class="metric-kicker">Completed</span><strong>{{ done_count }}</strong><p>Tasks marked Done.</p></article>
+    </div>
+</section>
+
+<section class="overview-detail-grid">
+    <article class="card section-card section-card-highlight">
+        <div class="section-heading">
+            <h2>Due soon</h2>
+            <a class="text-link" href="{% url 'task_list' %}?deadline=due_soon">Open filtered list</a>
+        </div>
+        {% if due_soon_tasks %}
+            <div class="stack-list">
+                {% for task in due_soon_tasks %}
+                    <a class="stack-item" href="{% url 'task_detail' task.pk %}?next={% url 'overview' %}">
+                        <div>
+                            <strong>{{ task.title }}</strong>
+                            <p>{{ task.course.code }} · due {{ task.due_date|date:'d M Y' }}</p>
+                        </div>
+                        <span class="badge {{ task.priority_badge_class }}">{{ task.get_priority_display }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-copy">No tasks are due soon.</p>
+        {% endif %}
+    </article>
+
+    <article class="card section-card">
+        <div class="section-heading">
+            <h2>Overdue tasks</h2>
+            <a class="text-link" href="{% url 'task_list' %}?deadline=overdue">Open filtered list</a>
+        </div>
+        {% if overdue_tasks %}
+            <div class="stack-list">
+                {% for task in overdue_tasks %}
+                    <a class="stack-item stack-item-danger" href="{% url 'task_detail' task.pk %}?next={% url 'overview' %}">
+                        <div>
+                            <strong>{{ task.title }}</strong>
+                            <p>{{ task.course.code }} · due {{ task.due_date|date:'d M Y' }}</p>
+                        </div>
+                        <span class="badge badge-danger">Needs action</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-copy">No overdue tasks right now.</p>
+        {% endif %}
+    </article>
+</section>
+
+<section class="overview-course-section">
+    <article class="card section-card">
+        <div class="section-heading">
+            <h2>Courses</h2>
+            <a class="text-link" href="{% url 'course_list' %}">View all</a>
+        </div>
+        {% if course_summaries %}
+            <div class="course-grid overview-course-grid">
+                {% for course in course_summaries %}
+                    <article class="course-item">
+                        <div class="course-item-head">
+                            <div>
+                                <p class="course-code">{{ course.code }}</p>
+                                <h3>{{ course.title }}</h3>
+                            </div>
+                        </div>
+                        <div class="course-item-meta">
+                            <span class="chip chip-neutral">{{ course.total_tasks }} total</span>
+                            <span class="chip chip-neutral">{{ course.active_tasks }} active</span>
+                            {% if course.next_due_date %}<span class="chip chip-neutral">Next due {{ course.next_due_date|date:'d M' }}</span>{% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-copy">No courses yet. Create one to organise your tasks.</p>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

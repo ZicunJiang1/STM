@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | Student Task Manager{% endblock %}
+{% block content %}
+<section class="dashboard-header-strip dashboard-header-strip-wide">
+    <div>
+        <h1>Dashboard</h1>
+        <p class="hero-text dashboard-intro">Focus on the work itself. Tasks are grouped by status so new items appear immediately.</p>
+    </div>
+    <div class="button-row compact-wrap">
+        <a class="btn btn-primary" href="{% url 'task_create' %}?next={{ request.get_full_path|urlencode }}">Create task</a>
+        <a class="btn btn-secondary" href="{% url 'course_create' %}?next={{ request.get_full_path|urlencode }}">Create course</a>
+    </div>
+</section>
+
+<section class="dashboard-board-only">
+    <article class="card board-panel board-panel-full">
+        <div class="section-heading board-panel-heading">
+            <div>
+                <h2>Task board</h2>
+                <p class="small-muted">Drag cards between columns to update status instantly. Summary metrics and deadline highlights are in Overview.</p>
+            </div>
+            <div class="board-heading-actions">
+                {% if selected_course %}
+                    <span class="chip chip-soft">{{ selected_course.code }} · {{ selected_course.title }}</span>
+                {% endif %}
+                <span class="chip chip-neutral">{{ total_tasks }} task{{ total_tasks|pluralize }}</span>
+            </div>
+        </div>
+
+        <form method="get" class="board-filter-bar" aria-label="Filter task board by course">
+            <div class="board-filter-field">
+                <label for="{{ board_filter_form.course.id_for_label }}">Course</label>
+                {{ board_filter_form.course }}
+            </div>
+            <div class="button-row tight-row board-filter-actions">
+                <button type="submit" class="btn btn-secondary">Apply</button>
+                {% if selected_course %}
+                    <a class="btn btn-ghost" href="{% url 'dashboard' %}">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+
+        {% if total_tasks %}
+            <div class="kanban-grid kanban-grid-expanded board-drag-grid" aria-label="Task board grouped by status">
+                {% for column in board_columns %}
+                    <section class="kanban-column kanban-column-{{ column.key }}" data-board-column data-status-key="{{ column.key }}">
+                        <div class="kanban-column-header">
+                            <div>
+                                <span class="kanban-label">{{ column.label }}</span>
+                                <strong data-column-count>{{ column.tasks|length }}</strong>
+                            </div>
+                            <span class="drop-hint">Drop here</span>
+                        </div>
+                        <div class="kanban-stack" data-board-stack data-empty-label="No {{ column.label|lower }} tasks.">
+                            {% if column.tasks %}
+                                {% for task in column.tasks %}
+                                    {% include 'core/partials/task_board_card.html' with task=task next_url=request.get_full_path %}
+                                {% endfor %}
+                            {% else %}
+                                <div class="kanban-empty" data-empty-state><p>No {{ column.label|lower }} tasks.</p></div>
+                            {% endif %}
+                        </div>
+                    </section>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state empty-state-large board-empty-state">
+                <h2>No tasks yet</h2>
+                <p class="muted">{% if selected_course %}No tasks found for this course yet. Try another course or create a new task for it.{% else %}Create a course and your first task to populate the board.{% endif %}</p>
+                <div class="button-row center-row">
+                    <a class="btn btn-secondary" href="{% url 'course_create' %}?next={{ request.get_full_path|urlencode }}">Create course</a>
+                    <a class="btn btn-primary" href="{% url 'task_create' %}?next={{ request.get_full_path|urlencode }}">Create task</a>
+                </div>
+            </div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

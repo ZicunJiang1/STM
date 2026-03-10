@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Login | Student Task Manager{% endblock %}
+{% block content %}
+<section class="auth-layout">
+    <article class="card auth-promo-card">
+        <h1>Welcome back</h1>
+        <p class="hero-text">Sign in to review upcoming work and update progress.</p>
+        <ul class="clean-list">
+            <li>Your tasks stay separate from other users.</li>
+            <li>Tasks can be grouped by course.</li>
+            <li>Overdue and due soon work is easy to spot.</li>
+        </ul>
+    </article>
+    <article class="card auth-card premium-auth-card">
+        <h2>Login</h2>
+        <p class="muted">Access your saved courses and tasks.</p>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="form-grid one-column">
+                {% for field in form %}
+                    <div>
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<div class="field-error">{{ field.errors|striptags }}</div>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary full-width top-gap">Login</button>
+        </form>
+        <p class="auth-links auth-links-strong"><span>Create an account:</span> <a class="auth-register-link auth-register-link-strong" href="{% url 'register' %}">Register</a></p>
+    </article>
+</section>
+{% endblock %}

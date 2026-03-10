@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Courses | Student Task Manager{% endblock %}
+{% block content %}
+<section class="hero-panel hero-panel-slim">
+    <div class="hero-copy">
+        <h1>Courses</h1>
+        <p class="hero-text">Group tasks by module so workload stays easy to review.</p>
+    </div>
+    <div class="hero-aside hero-aside-soft">
+        <div class="insight-list compact-insights">
+            <div><span>Total courses</span><strong>{{ course_total }}</strong></div>
+            <div><span>Open tasks</span><strong>{{ open_tasks_total }}</strong></div>
+        </div>
+        <a class="btn btn-primary full-width-mobile" href="{% url 'course_create' %}">New course</a>
+    </div>
+</section>
+
+<section class="card section-card">
+    <div class="section-heading">
+        <h2>Course list</h2>
+        <span class="chip chip-neutral">{{ courses|length }} course{{ courses|length|pluralize }}</span>
+    </div>
+    {% if courses %}
+        <div class="course-grid premium-course-grid">
+            {% for course in courses %}
+                <article class="course-card premium-course-card">
+                    <div class="course-card-top">
+                        <div>
+                            <span class="course-code">{{ course.code }}</span>
+                            <h3>{{ course.title }}</h3>
+                        </div>
+                        <span class="badge badge-soft">{{ course.semester|default:'Semester not set' }}</span>
+                    </div>
+                    <div class="course-stats-grid">
+                        <div>
+                            <span class="mini-label">Total tasks</span>
+                            <strong>{{ course.total_tasks }}</strong>
+                        </div>
+                        <div>
+                            <span class="mini-label">Active tasks</span>
+                            <strong>{{ course.active_tasks }}</strong>
+                        </div>
+                        <div>
+                            <span class="mini-label">Completed</span>
+                            <strong>{{ course.completed_tasks }}</strong>
+                        </div>
+                        <div>
+                            <span class="mini-label">Next due</span>
+                            <strong>{% if course.next_due_date %}{{ course.next_due_date|date:'d M Y' }}{% else %}No open tasks{% endif %}</strong>
+                        </div>
+                    </div>
+                    <div class="button-row compact top-gap">
+                        <a class="btn btn-ghost" href="{% url 'course_update' course.pk %}">Edit</a>
+                        <a class="btn btn-danger" href="{% url 'course_delete' course.pk %}">Delete</a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state empty-state-large">
+            <h2>No courses yet</h2>
+            <p class="muted">Create a course before adding tasks so work can be grouped correctly.</p>
+            <a class="btn btn-primary" href="{% url 'course_create' %}">Create course</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

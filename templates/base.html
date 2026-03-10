@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Student Task Manager{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=16">
+    <script defer src="{% static 'js/app.js' %}?v=16"></script>
+</head>
+<body class="page-transition-shell">
+    <div class="page-backdrop" aria-hidden="true"></div>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="site-header">
+        <div class="container header-shell">
+            <a class="brand" href="{% url 'dashboard' %}">
+                <span class="brand-mark">STM</span>
+                <span>
+                    <strong>Student Task Manager</strong>
+                    <small>Plan coursework clearly</small>
+                </span>
+            </a>
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+            <nav id="site-nav" class="site-nav" aria-label="Primary">
+                <ul>
+                    {% if request.user.is_authenticated %}
+                        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li><a href="{% url 'overview' %}">Overview</a></li>
+                        <li><a href="{% url 'task_list' %}">Tasks</a></li>
+                        <li><a href="{% url 'course_list' %}">Courses</a></li>
+                        <li><a href="{% url 'profile' %}">{{ request.user.profile.display_name|default:request.user.username }}</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}" data-confirm-title="Log out?" data-confirm="Do you want to log out of your account now?" data-confirm-confirm="Log out" data-confirm-cancel="Cancel" data-page-transition-form>
+                                {% csrf_token %}
+                                <button class="link-button" type="submit">Logout</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li><a href="{% url 'login' %}">Login</a></li>
+                        <li><a class="nav-pill guest-register-link" href="{% url 'register' %}">Create account</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="container main-shell page-transition-main">
+        {% if messages %}
+            <div class="message-stack" aria-live="polite">
+                {% for message in messages %}
+                    <div class="message message-{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <div class="confirm-modal hidden" data-confirm-modal aria-hidden="true">
+        <div class="confirm-modal-backdrop" data-confirm-close></div>
+        <section class="confirm-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-message">
+            <h2 id="confirm-modal-title">Confirm action</h2>
+            <p id="confirm-modal-message">Are you sure?</p>
+            <div class="confirm-modal-actions">
+                <button type="button" class="btn btn-secondary" data-confirm-cancel-button>Cancel</button>
+                <button type="button" class="btn btn-primary" data-confirm-accept-button>Continue</button>
+            </div>
+        </section>
+    </div>
+
+</body>
+</html>

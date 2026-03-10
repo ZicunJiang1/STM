@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}{{ task.title }} | Student Task Manager{% endblock %}
+{% block content %}
+<section class="hero-panel hero-panel-slim">
+    <div class="hero-copy" data-task-id="{{ task.id }}">
+        <div class="button-row compact-wrap task-detail-top-actions">
+            <a class="btn btn-ghost" href="{{ next_url }}">Back</a>
+            <a class="btn btn-ghost" href="{% url 'task_update' task.pk %}?next={{ next_url|urlencode }}">Edit</a>
+            <a class="btn btn-danger" href="{% url 'task_delete' task.pk %}?next={{ next_url|urlencode }}">Delete</a>
+        </div>
+        <h1>{{ task.title }}</h1>
+        <p class="hero-text">{{ task.description|default:'No description added yet.' }}</p>
+        <div class="hero-pill-row task-chip-row">
+            <span class="badge">{{ task.course.code }}</span>
+            <span class="badge {{ task.priority_badge_class }}">{{ task.get_priority_display }}</span>
+            <span class="badge status-badge {{ task.status_badge_class }}" data-status-text>{{ task.get_status_display }}</span>
+            {% if task.is_overdue %}<span class="badge badge-danger" data-due-flag>Overdue</span>{% elif task.is_due_soon %}<span class="badge due-badge" data-due-flag>Due soon</span>{% endif %}
+        </div>
+        <div class="task-detail-meta-grid">
+            <div><span class="mini-label">Due date</span><strong>{{ task.due_date|date:'d M Y' }}</strong></div>
+            <div><span class="mini-label">Created</span><strong>{{ task.created_at|date:'d M Y' }}</strong></div>
+            <div><span class="mini-label">Updated</span><strong>{{ task.updated_at|date:'d M Y' }}</strong></div>
+            <div><span class="mini-label">Completed</span><strong>{% if task.completed_at %}{{ task.completed_at|date:'d M Y, H:i' }}{% else %}Not completed{% endif %}</strong></div>
+        </div>
+    </div>
+    <aside class="hero-aside hero-aside-soft">
+        <p class="mini-label">Course</p>
+        <h2>{{ task.course.title }}</h2>
+        <p class="muted">{{ task.course.code }}{% if task.course.semester %} · {{ task.course.semester }}{% endif %}</p>
+        {% if not task.is_completed %}
+            <button type="button" class="btn btn-primary quick-status-btn" data-quick-status-url="{% url 'quick_status_update' task.pk %}">Cycle status</button>
+        {% endif %}
+    </aside>
+</section>
+
+<section class="content-grid two-column-layout">
+    <article class="card section-card section-card-main">
+        <div class="section-heading">
+            <h2>Task notes</h2>
+            <span class="chip chip-neutral">{{ task.notes.count }} note{{ task.notes.count|pluralize }}</span>
+        </div>
+        <form method="post" action="{% url 'task_note_create' task.pk %}" novalidate data-page-transition-form>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'task_detail' task.pk %}?next={{ next_url|urlencode }}">
+            {% for field in note_form %}
+                <div>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="field-error">{{ field.errors|striptags }}</div>{% endif %}
+                </div>
+            {% endfor %}
+            <div class="button-row top-gap">
+                <button type="submit" class="btn btn-primary">Add note</button>
+            </div>
+        </form>
+        <div class="soft-divider"></div>
+        {% if task.notes.all %}
+            <div class="note-list">
+                {% for note in task.notes.all %}
+                    <article class="note-card">
+                        <p>{{ note.content }}</p>
+                        <span class="small-muted">{{ note.created_at|date:'d M Y, H:i' }}</span>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-copy">No notes yet. Add one to track progress or decisions.</p>
+        {% endif %}
+    </article>
+
+    <aside class="card section-card">
+        <div class="section-heading">
+            <h2>Related tasks</h2>
+        </div>
+        {% if related_tasks %}
+            <div class="stack-list">
+                {% for item in related_tasks %}
+                    <a class="stack-item" href="{% url 'task_detail' item.pk %}?next={{ next_url|urlencode }}">
+                        <div>
+                            <strong>{{ item.title }}</strong>
+                            <p>Due {{ item.due_date|date:'d M Y' }}</p>
+                        </div>
+                        <span class="badge status-badge {{ item.status_badge_class }}">{{ item.get_status_display }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-copy">No other tasks are linked to this course yet.</p>
+        {% endif %}
+    </aside>
+</section>
+{% endblock %}

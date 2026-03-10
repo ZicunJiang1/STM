@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Tasks | Student Task Manager{% endblock %}
+{% block content %}
+<section class="hero-panel hero-panel-slim">
+    <div class="hero-copy">
+        <h1>Tasks</h1>
+        <p class="hero-text">Review tasks, adjust filters, and update progress from one page.</p>
+    </div>
+    <div class="hero-aside hero-aside-soft">
+        <div class="insight-list compact-insights">
+            <div><span>Total</span><strong>{{ total_tasks }}</strong></div>
+            <div><span>Active</span><strong>{{ active_count }}</strong></div>
+            <div><span>Due soon</span><strong>{{ due_soon_count }}</strong></div>
+            <div><span>Overdue</span><strong>{{ overdue_count }}</strong></div>
+        </div>
+        <a class="btn btn-primary full-width-mobile" href="{% url 'task_create' %}?next={{ current_list_url|urlencode }}">New task</a>
+    </div>
+</section>
+
+<section class="card filter-panel">
+    <div class="section-heading section-heading-tight">
+        <h2>Search, filter, and sort</h2>
+        {% if filter_active %}<span class="chip chip-neutral">Filter active</span>{% endif %}
+    </div>
+    <form method="get" class="form-grid filters-grid" novalidate>
+        {% for field in filter_form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            </div>
+        {% endfor %}
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Apply</button>
+            <a class="btn btn-ghost" href="{% url 'task_list' %}">Reset</a>
+        </div>
+    </form>
+</section>
+
+<section class="card section-card">
+    <div class="section-heading task-list-topbar">
+        <h2>Task list</h2>
+        <span class="chip chip-neutral">{{ tasks|length }} item{{ tasks|length|pluralize }}</span>
+    </div>
+
+    {% if tasks %}
+        <form method="post" action="{% url 'task_bulk_action' %}" class="bulk-panel" data-bulk-form>
+            {% csrf_token %}
+            {{ bulk_form.next }}
+            <input type="hidden" name="selected_tasks" value="" data-selected-tasks-input>
+            <div class="bulk-panel-left">
+                <label class="selection-toggle"><input type="checkbox" data-select-all> <span>Select all on page</span></label>
+                <span class="small-muted" data-selection-count>0 selected</span>
+            </div>
+            <div class="bulk-panel-actions">
+                {{ bulk_form.action }}
+                <button type="submit" class="btn btn-secondary" data-bulk-submit disabled>Apply to selected</button>
+            </div>
+        </form>
+
+        <div class="task-results-list">
+            {% for task in tasks %}
+                {% include 'core/partials/task_row.html' with task=task current_list_url=current_list_url %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state empty-state-large">
+            <h2>No tasks match the current filter</h2>
+            <p class="muted">Adjust the filters or create a new task.</p>
+            <div class="button-row center-row">
+                <a class="btn btn-ghost" href="{% url 'task_list' %}">Clear filters</a>
+                <a class="btn btn-primary" href="{% url 'task_create' %}?next={{ current_list_url|urlencode }}">Create task</a>
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
