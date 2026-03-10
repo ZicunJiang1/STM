@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -14,8 +16,10 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, T
 from .forms import BulkTaskActionForm, CourseForm, DashboardCourseFilterForm, ProfileForm, RegisterForm, TaskFilterForm, TaskForm, TaskNoteForm
 from .models import Course, Task
 from .services import (
+    OVERVIEW_TABS,
     apply_task_filters,
     base_task_queryset,
+    build_calendar_context,
     build_course_summaries,
     build_dashboard_summary,
     build_status_board,
@@ -89,12 +93,26 @@ class OverviewView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        active_tab = self.request.GET.get('tab', 'progress')
+        valid_tabs = {key for key, _label in OVERVIEW_TABS}
+        if active_tab not in valid_tabs:
+            active_tab = 'progress'
+
         all_tasks = base_task_queryset(self.request.user).order_by('due_date', '-updated_at')
         summary = build_dashboard_summary(all_tasks)
+        tab_links = {key: f"{reverse('overview')}?{urlencode({'tab': key})}" for key, _label in OVERVIEW_TABS}
+        calendar_context = build_calendar_context(self.request.user, self.request.GET.get('month'))
+        calendar_context['calendar_prev_url'] = f"{reverse('overview')}?{urlencode({'tab': 'calendar', 'month': calendar_context['calendar_prev_param']})}"
+        calendar_context['calendar_next_url'] = f"{reverse('overview')}?{urlencode({'tab': 'calendar', 'month': calendar_context['calendar_next_param']})}"
+
         context.update({
+            'active_tab': active_tab,
+            'overview_tabs': OVERVIEW_TABS,
+            'overview_tab_links': tab_links,
             'course_count': Course.objects.filter(user=self.request.user).count(),
             'course_summaries': build_course_summaries(self.request.user)[:6],
             **summary,
+            **calendar_context,
         })
         return context
 
@@ -104,8 +122,35 @@ class TaskListView(LoginRequiredMixin, ListView):
     template_name = 'core/task_list.html'
     context_object_name = 'tasks'
 
+    SORTABLE_COLUMNS = {
+        'title': ('title_asc', 'title_desc'),
+        'course': ('course_asc', 'course_desc'),
+        'status': ('status_asc', 'status_desc'),
+        'priority': ('priority_asc', 'priority_desc'),
+        'due': ('due_asc', 'due_desc'),
+        'updated': ('updated_asc', 'updated_desc'),
+    }
+
     def get_queryset(self):
         return apply_task_filters(base_task_queryset(self.request.user), self.request.GET)
+
+    def build_sort_url(self, sort_value: str) -> str:
+        params = self.request.GET.copy()
+        if sort_value:
+            params['sort'] = sort_value
+        elif 'sort' in params:
+            params.pop('sort')
+        query_string = params.urlencode()
+        return f"{reverse('task_list')}?{query_string}" if query_string else reverse('task_list')
+
+    def get_sort_links(self):
+        links = {}
+        for key, (asc_value, desc_value) in self.SORTABLE_COLUMNS.items():
+            links[key] = {
+                'asc': self.build_sort_url(asc_value),
+                'desc': self.build_sort_url(desc_value),
+            }
+        return links
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -114,12 +159,22 @@ class TaskListView(LoginRequiredMixin, ListView):
         current_list_url = reverse('task_list')
         if current_query:
             current_list_url = f'{current_list_url}?{current_query}'
-        context['filter_form'] = TaskFilterForm(self.request.GET or None, user=self.request.user)
+        filter_form = TaskFilterForm(self.request.GET or None, user=self.request.user)
+        context['filter_form'] = filter_form
         context['bulk_form'] = BulkTaskActionForm(initial={'next': current_list_url})
         context['current_query'] = current_query
         context['current_list_url'] = current_list_url
-        context.update(build_dashboard_summary(all_tasks))
+        context['sort_links'] = self.get_sort_links()
+        context['current_sort'] = self.request.GET.get('sort', 'smart')
         context['filter_active'] = any(self.request.GET.get(key) for key in ['q', 'course', 'status', 'priority', 'deadline'])
+        context['compact_filter_values'] = {
+            'q': filter_form['q'],
+            'course': filter_form['course'],
+            'status': filter_form['status'],
+            'priority': filter_form['priority'],
+            'deadline': filter_form['deadline'],
+        }
+        context.update(build_dashboard_summary(all_tasks))
         return context
 
 

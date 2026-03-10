@@ -1,4 +1,4 @@
-<article class="kanban-task kanban-task-roomy {% if task.is_overdue %}kanban-task-overdue{% elif task.is_due_soon %}kanban-task-due-soon{% endif %}" data-task-id="{{ task.id }}" data-task-status="{{ task.status }}" draggable="true">
+<article class="kanban-task kanban-task-roomy {% if task.is_overdue %}kanban-task-overdue{% elif task.is_due_soon %}kanban-task-due-soon{% endif %}" data-task-id="{{ task.id }}" data-task-status="{{ task.status }}" data-quick-status-url="{% url 'quick_status_update' task.pk %}" draggable="true">
     <div class="kanban-drag-handle" aria-hidden="true">⋮⋮</div>
     <div class="kanban-task-top">
         <div>
@@ -22,8 +22,7 @@
     </div>
     <div class="kanban-task-footer kanban-task-footer-roomy">
         <span class="small-muted">Due {{ task.due_date|date:'d M Y' }}</span>
-        <div class="button-row tight-row">
-            <button type="button" class="btn btn-ghost quick-status-btn" data-quick-status-url="{% url 'quick_status_update' task.pk %}">Cycle status</button>
+        <div class="button-row tight-row kanban-task-actions">
             <a class="btn btn-ghost" href="{% url 'task_detail' task.pk %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">Open</a>
         </div>
     </div>

@@ -150,7 +150,7 @@ const App = (() => {
     });
 
     if (!dueTargets.length && dueFlag) {
-      const chipRow = container.querySelector('.task-chip-row, .task-row-badges, .hero-pill-row, .kanban-task-meta');
+      const chipRow = container.querySelector('.task-chip-row, .task-row-badges, .hero-pill-row, .kanban-task-meta, .task-table-status-cell');
       if (chipRow) {
         const span = document.createElement('span');
         span.dataset.dueFlag = 'true';
@@ -163,9 +163,11 @@ const App = (() => {
     container.dataset.taskStatus = data.status;
     container.classList.toggle('task-card-overdue', data.is_overdue);
     container.classList.toggle('task-row-card-overdue', data.is_overdue);
+    container.classList.toggle('task-table-row-overdue', data.is_overdue);
     container.classList.toggle('kanban-task-overdue', data.is_overdue);
     container.classList.toggle('task-card-due-soon', !data.is_overdue && data.is_due_soon);
     container.classList.toggle('task-row-card-due', !data.is_overdue && data.is_due_soon);
+    container.classList.toggle('task-table-row-due', !data.is_overdue && data.is_due_soon);
     container.classList.toggle('kanban-task-due-soon', !data.is_overdue && data.is_due_soon);
 
     if (container.classList.contains('kanban-task')) {
@@ -221,46 +223,63 @@ const App = (() => {
 
   const TaskBoardDnD = {
     draggedCard: null,
+    bindCard(card) {
+      if (!card || card.dataset.dragBound === 'true') return;
+      card.dataset.dragBound = 'true';
+      card.setAttribute('draggable', 'true');
+      card.querySelectorAll('a, button').forEach((element) => {
+        element.setAttribute('draggable', 'false');
+      });
+
+      card.addEventListener('dragstart', (event) => {
+        this.draggedCard = card;
+        card.classList.add('is-dragging');
+        document.body.classList.add('board-dragging');
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', card.dataset.taskId || '');
+        }
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('is-dragging');
+        document.body.classList.remove('board-dragging');
+        this.clearColumnHighlights();
+        this.draggedCard = null;
+      });
+    },
     init() {
-      const cards = document.querySelectorAll('.kanban-task[draggable="true"]');
+      const cards = document.querySelectorAll('.kanban-task[draggable="true"], .kanban-task');
       const columns = document.querySelectorAll('[data-board-column]');
       if (!cards.length || !columns.length) return;
 
-      cards.forEach((card) => {
-        card.addEventListener('dragstart', (event) => {
-          this.draggedCard = card;
-          card.classList.add('is-dragging');
-          if (event.dataTransfer) {
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/plain', card.dataset.taskId || '');
-          }
+      cards.forEach((card) => this.bindCard(card));
+
+      const registerDropZone = (element, column) => {
+        if (!element || element.dataset.dropBound === 'true') return;
+        element.dataset.dropBound = 'true';
+
+        element.addEventListener('dragenter', (event) => {
+          event.preventDefault();
+          column.classList.add('is-drop-target');
         });
 
-        card.addEventListener('dragend', () => {
-          card.classList.remove('is-dragging');
-          this.clearColumnHighlights();
-          this.draggedCard = null;
-        });
-      });
-
-      columns.forEach((column) => {
-        const stack = column.querySelector('[data-board-stack]');
-        if (!stack) return;
-
-        column.addEventListener('dragover', (event) => {
+        element.addEventListener('dragover', (event) => {
           event.preventDefault();
           column.classList.add('is-drop-target');
           if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
         });
 
-        column.addEventListener('dragleave', (event) => {
-          if (!column.contains(event.relatedTarget)) {
+        element.addEventListener('dragleave', (event) => {
+          const nextTarget = event.relatedTarget;
+          if (!nextTarget || !column.contains(nextTarget)) {
             column.classList.remove('is-drop-target');
           }
         });
 
-        column.addEventListener('drop', async (event) => {
+        element.addEventListener('drop', async (event) => {
           event.preventDefault();
+          event.stopPropagation();
           column.classList.remove('is-drop-target');
           if (!this.draggedCard) return;
           const card = this.draggedCard;
@@ -268,8 +287,7 @@ const App = (() => {
           const currentStatus = card.dataset.taskStatus;
           if (!targetStatus || targetStatus === currentStatus) return;
 
-          const quickButton = card.querySelector('.quick-status-btn');
-          const url = quickButton?.dataset.quickStatusUrl;
+          const url = card.dataset.quickStatusUrl;
           if (!url) return;
 
           const rollbackState = optimisticallyMoveBoardCard(card, targetStatus);
@@ -283,8 +301,21 @@ const App = (() => {
             setTimeout(() => card.classList.remove('shake-error'), 420);
           } finally {
             card.classList.remove('is-updating');
+            document.body.classList.remove('board-dragging');
+            this.draggedCard = null;
           }
         });
+      };
+
+      columns.forEach((column) => {
+        registerDropZone(column, column);
+        registerDropZone(column.querySelector('[data-board-stack]'), column);
+        registerDropZone(column.querySelector('[data-empty-state]'), column);
+      });
+
+      document.addEventListener('drop', () => {
+        this.clearColumnHighlights();
+        document.body.classList.remove('board-dragging');
       });
 
       syncAllBoardColumns();

@@ -1,6 +1,3 @@
-# STM
-This is a student task manager app for assessment of Information Technology
-=======
 # Student Task Manager — UI-focused second version
 
 A Django coursework project implementing a premium-feel student task manager with:

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import timedelta
-from collections import OrderedDict
+import calendar
+from collections import OrderedDict, defaultdict
+from datetime import date, timedelta
 
 from django.db.models import Case, Count, IntegerField, Min, Q, When
 from django.utils import timezone
@@ -17,12 +18,33 @@ PRIORITY_ORDER = Case(
     output_field=IntegerField(),
 )
 
+PRIORITY_ORDER_DESC = Case(
+    When(priority=Task.Priority.LOW, then=0),
+    When(priority=Task.Priority.MEDIUM, then=1),
+    When(priority=Task.Priority.HIGH, then=2),
+    default=3,
+    output_field=IntegerField(),
+)
+
+STATUS_ORDER = Case(
+    When(status=Task.Status.TODO, then=0),
+    When(status=Task.Status.DOING, then=1),
+    When(status=Task.Status.DONE, then=2),
+    default=3,
+    output_field=IntegerField(),
+)
 
 STATUS_COLUMNS = [
     (Task.Status.TODO, 'To-do'),
     (Task.Status.DOING, 'Doing'),
     (Task.Status.DONE, 'Done'),
 ]
+
+OVERVIEW_TABS = (
+    ('progress', 'Progress'),
+    ('deadlines', 'Deadlines'),
+    ('calendar', 'Calendar'),
+)
 
 
 def base_task_queryset(user):
@@ -63,12 +85,34 @@ def apply_task_filters(queryset, params):
             due_date__lt=today,
         )
 
-    if sort == 'due_desc':
-        queryset = queryset.order_by('-due_date', '-updated_at')
-    elif sort == 'priority':
+    if sort == 'title_asc':
+        queryset = queryset.order_by('title', '-updated_at')
+    elif sort == 'title_desc':
+        queryset = queryset.order_by('-title', '-updated_at')
+    elif sort == 'course_asc':
+        queryset = queryset.order_by('course__code', 'title')
+    elif sort == 'course_desc':
+        queryset = queryset.order_by('-course__code', 'title')
+    elif sort == 'status_asc':
+        queryset = queryset.annotate(status_rank=STATUS_ORDER).order_by('status_rank', 'due_date', '-updated_at')
+    elif sort == 'status_desc':
+        queryset = queryset.annotate(status_rank=STATUS_ORDER).order_by('-status_rank', 'due_date', '-updated_at')
+    elif sort in {'priority', 'priority_asc'}:
         queryset = queryset.order_by(PRIORITY_ORDER, 'due_date', '-updated_at')
-    elif sort == 'updated_desc':
+    elif sort == 'priority_desc':
+        queryset = queryset.order_by(PRIORITY_ORDER_DESC, 'due_date', '-updated_at')
+    elif sort == 'due_asc':
+        queryset = queryset.order_by('due_date', '-updated_at')
+    elif sort == 'due_desc':
+        queryset = queryset.order_by('-due_date', '-updated_at')
+    elif sort in {'updated_desc', 'updated_descending'}:
         queryset = queryset.order_by('-updated_at')
+    elif sort == 'updated_asc':
+        queryset = queryset.order_by('updated_at')
+    elif sort == 'created_asc':
+        queryset = queryset.order_by('created_at')
+    elif sort == 'created_desc':
+        queryset = queryset.order_by('-created_at')
     elif sort == 'course':
         queryset = queryset.order_by('course__code', 'due_date', PRIORITY_ORDER)
     else:
@@ -149,6 +193,67 @@ def get_overview_context(user):
     summary['course_count'] = Course.objects.filter(user=user).count()
     summary['course_summaries'] = build_course_summaries(user)[:6]
     return summary
+
+
+def parse_month_param(month_value: str | None) -> tuple[int, int]:
+    today = timezone.localdate()
+    if month_value:
+        try:
+            year_str, month_str = month_value.split('-', 1)
+            year = int(year_str)
+            month = int(month_str)
+            if 1 <= month <= 12:
+                return year, month
+        except (TypeError, ValueError):
+            pass
+    return today.year, today.month
+
+
+def build_calendar_context(user, month_value: str | None = None):
+    year, month = parse_month_param(month_value)
+    month_start = date(year, month, 1)
+    month_calendar = calendar.Calendar(firstweekday=0)
+    week_dates = month_calendar.monthdatescalendar(year, month)
+    range_start = week_dates[0][0]
+    range_end = week_dates[-1][-1]
+
+    tasks = list(
+        base_task_queryset(user)
+        .filter(due_date__gte=range_start, due_date__lte=range_end)
+        .order_by('due_date', PRIORITY_ORDER, 'title')
+    )
+    tasks_by_date = defaultdict(list)
+    for task in tasks:
+        tasks_by_date[task.due_date].append(task)
+
+    today = timezone.localdate()
+    weeks = []
+    for week in week_dates:
+        day_cells = []
+        for day in week:
+            day_tasks = tasks_by_date.get(day, [])
+            day_cells.append({
+                'date': day,
+                'in_month': day.month == month,
+                'is_today': day == today,
+                'tasks': day_tasks[:2],
+                'extra_count': max(0, len(day_tasks) - 2),
+            })
+        weeks.append(day_cells)
+
+    prev_anchor = month_start - timedelta(days=1)
+    next_anchor = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1)
+    month_task_count = sum(1 for task in tasks if task.due_date.month == month and task.due_date.year == year)
+
+    return {
+        'calendar_label': month_start.strftime('%B %Y'),
+        'calendar_month_param': month_start.strftime('%Y-%m'),
+        'calendar_prev_param': prev_anchor.strftime('%Y-%m'),
+        'calendar_next_param': next_anchor.strftime('%Y-%m'),
+        'calendar_weeks': weeks,
+        'calendar_weekdays': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        'calendar_month_task_count': month_task_count,
+    }
 
 
 def group_tasks_by_course(tasks):

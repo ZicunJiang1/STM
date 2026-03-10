@@ -1,0 +1,32 @@
+<tr class="task-table-row {% if task.is_overdue %}task-table-row-overdue{% elif task.is_due_soon %}task-table-row-due{% endif %}" data-task-id="{{ task.id }}">
+    <td class="task-table-checkbox-col"><input type="checkbox" class="task-select-checkbox" value="{{ task.id }}" aria-label="Select {{ task.title }}"></td>
+    <td>
+        <div class="task-table-title-cell">
+            <a class="task-title-link" href="{% url 'task_detail' task.pk %}{% if current_list_url %}?next={{ current_list_url|urlencode }}{% endif %}"><strong>{{ task.title }}</strong></a>
+            <p class="muted clamp-2">{{ task.description|default:'No description provided.' }}</p>
+        </div>
+    </td>
+    <td>
+        <div class="task-table-course">
+            <span class="badge">{{ task.course.code }}</span>
+            <span class="small-muted">{{ task.course.title }}</span>
+        </div>
+    </td>
+    <td>
+        <div class="task-table-status-cell">
+            <span class="badge status-badge {{ task.status_badge_class }}" data-status-text>{{ task.get_status_display }}</span>
+            {% if task.is_overdue %}<span class="badge badge-danger compact-due-flag" data-due-flag>Overdue</span>{% elif task.is_due_soon %}<span class="badge due-badge compact-due-flag" data-due-flag>Due soon</span>{% endif %}
+        </div>
+    </td>
+    <td><span class="badge {{ task.priority_badge_class }}">{{ task.get_priority_display }}</span></td>
+    <td>{{ task.due_date|date:'d M Y' }}</td>
+    <td>{{ task.updated_at|date:'d M Y' }}</td>
+    <td>
+        <div class="task-table-actions">
+            <button type="button" class="btn btn-ghost quick-status-btn" data-quick-status-url="{% url 'quick_status_update' task.pk %}">Cycle</button>
+            <a class="btn btn-ghost" href="{% url 'task_detail' task.pk %}{% if current_list_url %}?next={{ current_list_url|urlencode }}{% endif %}">Open</a>
+            <a class="btn btn-ghost" href="{% url 'task_update' task.pk %}{% if current_list_url %}?next={{ current_list_url|urlencode }}{% endif %}">Edit</a>
+            <a class="btn btn-danger" href="{% url 'task_delete' task.pk %}{% if current_list_url %}?next={{ current_list_url|urlencode }}{% endif %}">Delete</a>
+        </div>
+    </td>
+</tr>

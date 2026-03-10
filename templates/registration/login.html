@@ -1,18 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}Login | Student Task Manager{% endblock %}
 {% block content %}
-<section class="auth-layout">
-    <article class="card auth-promo-card">
-        <h1>Welcome back</h1>
-        <p class="hero-text">Sign in to review upcoming work and update progress.</p>
-        <ul class="clean-list">
-            <li>Your tasks stay separate from other users.</li>
-            <li>Tasks can be grouped by course.</li>
-            <li>Overdue and due soon work is easy to spot.</li>
-        </ul>
-    </article>
-    <article class="card auth-card premium-auth-card">
-        <h2>Login</h2>
+<section class="auth-center-shell">
+    <article class="card auth-card auth-card-centered premium-auth-card">
+        <h1>Login</h1>
         <p class="muted">Access your saved courses and tasks.</p>
         <form method="post" novalidate>
             {% csrf_token %}
@@ -30,7 +21,7 @@
             </div>
             <button type="submit" class="btn btn-primary full-width top-gap">Login</button>
         </form>
-        <p class="auth-links auth-links-strong"><span>Create an account:</span> <a class="auth-register-link auth-register-link-strong" href="{% url 'register' %}">Register</a></p>
+        <p class="auth-links auth-links-strong auth-links-center"><span>Create an account:</span> <a class="auth-register-link auth-register-link-strong" href="{% url 'register' %}">Register</a></p>
     </article>
 </section>
 {% endblock %}

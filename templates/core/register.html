@@ -1,18 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}Register | Student Task Manager{% endblock %}
 {% block content %}
-<section class="auth-layout">
-    <article class="card auth-promo-card">
-        <h1>Create an account</h1>
-        <p class="hero-text">Create an account to keep courses and deadlines in one place.</p>
-        <ul class="clean-list">
-            <li>Each account has its own task list.</li>
-            <li>Courses help structure work by module.</li>
-            <li>The dashboard highlights what needs attention first.</li>
-        </ul>
-    </article>
-    <article class="card auth-card premium-auth-card">
-        <h2>Create your account</h2>
+<section class="auth-center-shell">
+    <article class="card auth-card auth-card-centered premium-auth-card">
+        <h1>Create your account</h1>
         <p class="muted">Register to save your own courses and tasks.</p>
         <form method="post" novalidate>
             {% csrf_token %}
@@ -28,7 +19,7 @@
             </div>
             <button type="submit" class="btn btn-primary full-width top-gap">Create account</button>
         </form>
-        <p class="auth-links">Already registered? <a href="{% url 'login' %}">Back to login</a></p>
+        <p class="auth-links auth-links-center">Already registered? <a href="{% url 'login' %}">Back to login</a></p>
     </article>
 </section>
 {% endblock %}

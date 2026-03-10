@@ -158,6 +158,19 @@ class ViewTests(TestCase):
         self.assertContains(response, 'Finish prototype')
         self.assertNotContains(response, 'Other course task')
 
+    def test_overview_deadlines_tab_renders_due_soon_tasks(self):
+        self.client.login(username='carol', password='pass12345')
+        response = self.client.get(reverse('overview'), {'tab': 'deadlines'})
+        self.assertContains(response, 'Due soon')
+        self.assertContains(response, 'Finish prototype')
+
+    def test_overview_calendar_tab_renders_month_grid(self):
+        self.client.login(username='carol', password='pass12345')
+        month_param = self.task.due_date.strftime('%Y-%m')
+        response = self.client.get(reverse('overview'), {'tab': 'calendar', 'month': month_param})
+        self.assertContains(response, 'A simple month view for task due dates.')
+        self.assertContains(response, 'Finish prototype')
+
     def test_task_list_only_shows_current_users_tasks(self):
         self.client.login(username='carol', password='pass12345')
         response = self.client.get(reverse('task_list'))

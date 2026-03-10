@@ -1,66 +1,127 @@
 {% extends 'base.html' %}
 {% block title %}Tasks | Student Task Manager{% endblock %}
 {% block content %}
-<section class="hero-panel hero-panel-slim">
-    <div class="hero-copy">
+<section class="task-page-header card compact-page-card">
+    <div>
         <h1>Tasks</h1>
-        <p class="hero-text">Review tasks, adjust filters, and update progress from one page.</p>
+        <p class="hero-text">Review work, filter quickly, and sort directly from the list.</p>
     </div>
-    <div class="hero-aside hero-aside-soft">
-        <div class="insight-list compact-insights">
+    <div class="task-page-header-side">
+        <div class="mini-stat-grid">
             <div><span>Total</span><strong>{{ total_tasks }}</strong></div>
             <div><span>Active</span><strong>{{ active_count }}</strong></div>
             <div><span>Due soon</span><strong>{{ due_soon_count }}</strong></div>
             <div><span>Overdue</span><strong>{{ overdue_count }}</strong></div>
         </div>
-        <a class="btn btn-primary full-width-mobile" href="{% url 'task_create' %}?next={{ current_list_url|urlencode }}">New task</a>
+        <a class="btn btn-primary" href="{% url 'task_create' %}?next={{ current_list_url|urlencode }}">New task</a>
     </div>
 </section>
 
-<section class="card filter-panel">
+<section class="card compact-filter-shell">
     <div class="section-heading section-heading-tight">
-        <h2>Search, filter, and sort</h2>
-        {% if filter_active %}<span class="chip chip-neutral">Filter active</span>{% endif %}
+        <h2>Quick filters</h2>
+        {% if filter_active %}<span class="chip chip-neutral">Active</span>{% endif %}
     </div>
-    <form method="get" class="form-grid filters-grid" novalidate>
-        {% for field in filter_form %}
-            <div>
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-            </div>
-        {% endfor %}
-        <div class="filter-actions">
+    <form method="get" class="compact-filter-grid" novalidate>
+        {% if current_sort and current_sort != "smart" %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
+        <div class="compact-filter-search">
+            <label for="{{ compact_filter_values.q.id_for_label }}">Search</label>
+            {{ compact_filter_values.q }}
+        </div>
+        <div>
+            <label for="{{ compact_filter_values.course.id_for_label }}">Course</label>
+            {{ compact_filter_values.course }}
+        </div>
+        <div>
+            <label for="{{ compact_filter_values.status.id_for_label }}">Status</label>
+            {{ compact_filter_values.status }}
+        </div>
+        <div>
+            <label for="{{ compact_filter_values.priority.id_for_label }}">Priority</label>
+            {{ compact_filter_values.priority }}
+        </div>
+        <div>
+            <label for="{{ compact_filter_values.deadline.id_for_label }}">Deadline</label>
+            {{ compact_filter_values.deadline }}
+        </div>
+        <div class="compact-filter-actions">
             <button type="submit" class="btn btn-primary">Apply</button>
             <a class="btn btn-ghost" href="{% url 'task_list' %}">Reset</a>
         </div>
     </form>
 </section>
 
-<section class="card section-card">
+<section class="card task-table-card">
     <div class="section-heading task-list-topbar">
         <h2>Task list</h2>
         <span class="chip chip-neutral">{{ tasks|length }} item{{ tasks|length|pluralize }}</span>
     </div>
 
     {% if tasks %}
-        <form method="post" action="{% url 'task_bulk_action' %}" class="bulk-panel" data-bulk-form>
+        <form method="post" action="{% url 'task_bulk_action' %}" class="bulk-panel bulk-panel-table" data-bulk-form>
             {% csrf_token %}
             {{ bulk_form.next }}
             <input type="hidden" name="selected_tasks" value="" data-selected-tasks-input>
             <div class="bulk-panel-left">
-                <label class="selection-toggle"><input type="checkbox" data-select-all> <span>Select all on page</span></label>
+                <label class="selection-toggle"><input type="checkbox" data-select-all> <span>Select all</span></label>
                 <span class="small-muted" data-selection-count>0 selected</span>
             </div>
             <div class="bulk-panel-actions">
                 {{ bulk_form.action }}
-                <button type="submit" class="btn btn-secondary" data-bulk-submit disabled>Apply to selected</button>
+                <button type="submit" class="btn btn-secondary" data-bulk-submit disabled>Apply</button>
             </div>
         </form>
 
-        <div class="task-results-list">
-            {% for task in tasks %}
-                {% include 'core/partials/task_row.html' with task=task current_list_url=current_list_url %}
-            {% endfor %}
+        <div class="task-table-wrapper">
+            <table class="task-table">
+                <thead>
+                    <tr>
+                        <th class="task-table-checkbox-col"></th>
+                        <th>
+                            <div class="sortable-head">
+                                <span>Title</span>
+                                <span class="sort-pair"><a href="{{ sort_links.title.asc }}" aria-label="Sort title ascending">↑</a><a href="{{ sort_links.title.desc }}" aria-label="Sort title descending">↓</a></span>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="sortable-head">
+                                <span>Course</span>
+                                <span class="sort-pair"><a href="{{ sort_links.course.asc }}" aria-label="Sort course ascending">↑</a><a href="{{ sort_links.course.desc }}" aria-label="Sort course descending">↓</a></span>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="sortable-head">
+                                <span>Status</span>
+                                <span class="sort-pair"><a href="{{ sort_links.status.asc }}" aria-label="Sort status ascending">↑</a><a href="{{ sort_links.status.desc }}" aria-label="Sort status descending">↓</a></span>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="sortable-head">
+                                <span>Priority</span>
+                                <span class="sort-pair"><a href="{{ sort_links.priority.asc }}" aria-label="Sort priority ascending">↑</a><a href="{{ sort_links.priority.desc }}" aria-label="Sort priority descending">↓</a></span>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="sortable-head">
+                                <span>Due</span>
+                                <span class="sort-pair"><a href="{{ sort_links.due.asc }}" aria-label="Sort due date ascending">↑</a><a href="{{ sort_links.due.desc }}" aria-label="Sort due date descending">↓</a></span>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="sortable-head">
+                                <span>Updated</span>
+                                <span class="sort-pair"><a href="{{ sort_links.updated.asc }}" aria-label="Sort updated date ascending">↑</a><a href="{{ sort_links.updated.desc }}" aria-label="Sort updated date descending">↓</a></span>
+                            </div>
+                        </th>
+                        <th class="task-table-actions-col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                        {% include 'core/partials/task_table_row.html' with task=task current_list_url=current_list_url %}
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     {% else %}
         <div class="empty-state empty-state-large">
