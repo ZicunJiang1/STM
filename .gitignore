@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media and static build output
+media/
+staticfiles/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Type checker / lint
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Sentry / misc
+*.orig
+
+# Node (if frontend exists)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Collected static files
+/static/
+
+# Uploaded files (optional, depending on your deployment)
+# /media/
+
+# Secrets / certificates
+*.pem
+*.key
+*.crt
+
+# Gunicorn / uWSGI
+gunicorn.pid
+*.sock
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# Local cache
+.cache/
