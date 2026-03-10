@@ -89,3 +89,6 @@ gunicorn.pid
 
 # Local cache
 .cache/
+
+.DS_STORE
+requirements_bu
